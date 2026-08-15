@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhishGuard - Auditoría Sintáctica de IA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            background-color: #0f051d;
+            color: #fce7f3;
+            font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .container { grid-template-columns: 1fr 1fr; }
+            .header-panel { grid-column: span 2; }
+        }
+
+        .header-panel {
+            background: linear-gradient(135deg, rgba(30, 10, 45, 0.8) 0%, rgba(50, 15, 65, 0.5) 100%);
+            border: 1px solid rgba(236, 72, 153, 0.3);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 25px rgba(236, 72, 153, 0.15);
+        }
+
+        .header-panel h1 {
+            background: linear-gradient(135deg, #f472b6 0%, #ec4899 50%, #d946ef 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .header-panel p {
+            color: #fbcfe8;
+            font-size: 0.95rem;
+        }
+
+        .card {
+            background: rgba(26, 9, 43, 0.7);
+            border: 1px solid #831843;
+            border-radius: 14px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #f472b6;
+        }
+
+        textarea {
+            width: 100%;
+            height: 220px;
+            background-color: #1a092b;
+            color: #fdf2f8;
+            border: 1px solid #831843;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            resize: none;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        textarea:focus {
+            border-color: #f472b6;
+            box-shadow: 0 0 18px rgba(244, 114, 182, 0.35);
+        }
+
+        button.primary-btn {
+            background: linear-gradient(135deg, #db2777 0%, #c026d3 100%);
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 1rem;
+            border: none;
+            border-radius: 10px;
+            padding: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 18px rgba(219, 39, 119, 0.45);
+            transition: all 0.2s ease;
+        }
+
+        button.primary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(219, 39, 119, 0.65);
+        }
+
+        .verdict-box {
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            background: #140524;
+            border-left: 4px solid #831843;
+        }
+
+        .progress-bar-container {
+            margin-top: 5px;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+        }
+
+        .progress-track {
+            height: 10px;
+            background: #0f051d;
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid #831843;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 5px;
+        }
+
+        .metrics-list {
+            list-style: none;
+            font-size: 0.85rem;
+            color: #fbcfe8;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: #140524;
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(131, 24, 67, 0.5);
+        }
+
+        .metrics-list li span {
+            color: #f472b6;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-panel">
+        <h1>🛡️ PhishGuard</h1>
+        <p>Sistema interactivo de clasificación de riesgo de sintaxis de IA</p>
+    </div>
+
+    <div class="card">
+        <label for="inputText">Texto a analizar</label>
+        <textarea id="inputText" placeholder="Pega el contenido aquí (mínimo 20 caracteres)..."></textarea>
+        <button class="primary-btn" onclick="auditoriaPhishguard()">Analizar con PhishGuard</button>
+    </div>
+
+    <div class="card">
+        <label>Dictamen e Indicadores</label>
+        
+        <div id="verdictBox" class="verdict-box">
+            Ingresa un texto para clasificar su nivel de riesgo.
+        </div>
+
+        <div class="progress-bar-container">
+            <div class="progress-label">
+                <span>Probabilidad de IA</span>
+                <span id="probValue">0%</span>
+            </div>
+            <div class="progress-track">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+        </div>
+
+        <ul class="metrics-list">
+            <li>Dictamen: <span id="metricDictamen">-</span></li>
+            <li>Variabilidad Sintáctica (PPL aprox.): <span id="metricPpl">-</span></li>
+            <li>Densidad de comas: <span id="metricComas">-</span></li>
+            <li>Estructura de viñetas: <span id="metricBullets">-</span></li>
+        </ul>
+    </div>
+</div>
+
+<script>
+function auditoriaPhishguard() {
+    const texto = document.getElementById('inputText').value.trim();
+    const verdictBox = document.getElementById('verdictBox');
+    const probValue = document.getElementById('probValue');
+    const progressFill = document.getElementById('progressFill');
+    const metricDictamen = document.getElementById('metricDictamen');
+    const metricPpl = document.getElementById('metricPpl');
+    const metricComas = document.getElementById('metricComas');
+    const metricBullets = document.getElementById('metricBullets');
+
+    if (texto.length < 20) {
+        verdictBox.innerHTML = "⚠️ <strong>Texto muy corto:</strong> Ingresa al menos 20 caracteres para analizar.";
+        return;
+    }
+
+    const palabras = texto.split(/\s+/).filter(p => p.length > 0);
+    const conteoPalabras = palabras.length;
+    const conteoComas = (texto.match(/,/g) || []).length;
+    const ratioComas = ((conteoComas / Math.max(conteoPalabras, 1)) * 100);
+
+    const tieneEmojisLista = /^\s*[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}]/m.test(texto);
+    
+    const oraciones = texto.split(/[.!?]+/).filter(o => o.trim().length > 0);
+    const longitudes = oraciones.map(o => o.trim().split(/\s+/).length);
+    
+    const media = longitudes.reduce((a, b) => a + b, 0) / Math.max(longitudes.length, 1);
+    const varianza = longitudes.reduce((a, b) => a + Math.pow(b - media, 2), 0) / Math.max(longitudes.length, 1);
+    const stdLongitud = Math.sqrt(varianza);
+
+    // Algoritmo de estimación de Perplejidad y Score IA
+    const pplAprox = Math.max(15, Math.min(150, Math.round(stdLongitud * 12 + (100 - ratioComas * 2))));
+
+    let scoreIaBase = 50.0;
+    if (pplAprox < 85) scoreIaBase += 25;
+    if (ratioComas > 8.0) scoreIaBase += 15;
+    if (tieneEmojisLista) scoreIaBase += 10;
+    if (stdLongitud < 4.0 && oraciones.length > 2) scoreIaBase += 10;
+
+    const probIa = Math.min(99.0, Math.max(1.0, Math.round(scoreIaBase)));
+
+    probValue.innerText = `${probIa}%`;
+    progressFill.style.width = `${probIa}%`;
+
+    metricPpl.innerText = pplAprox;
+    metricComas.innerText = `${ratioComas.toFixed(1)}%`;
+    metricBullets.innerText = tieneEmojisLista ? "Detectada (Típica IA)" : "Orgánica";
+
+    if (probIa >= 70) {
+        const nivelRiesgo = "🔴 RIESGO ALTO";
+        verdictBox.style.borderLeftColor = "#ef4444";
+        progressFill.style.background = "#ef4444";
+        verdictBox.innerHTML = `🔴 <strong>Nivel de Riesgo ALTO (${probIa}% de IA):</strong> El texto presenta patrones automatizados rígidos, puntuación repetitiva o formatos sintéticos característicos de modelos generativos.`;
+        metricDictamen.innerText = nivelRiesgo;
+    } else if (probIa >= 35) {
+        const nivelRiesgo = "🟡 RIESGO MEDIO";
+        verdictBox.style.borderLeftColor = "#eab308";
+        progressFill.style.background = "#eab308";
+        verdictBox.innerHTML = `🟡 <strong>Nivel de Riesgo MEDIO (${probIa}% de IA):</strong> Detectada combinación de fragmentos manuales con posibles pasajes parafraseados o estructurados por IA.`;
+        metricDictamen.innerText = nivelRiesgo;
+    } else {
+        const nivelRiesgo = "🟢 RIESGO BAJO";
+        verdictBox.style.borderLeftColor = "#22c55e";
+        progressFill.style.background = "#22c55e";
+        verdictBox.innerHTML = `🟢 <strong>Nivel de Riesgo BAJO (${probIa}% de IA):</strong> Redacción orgánica y fluida con alta variabilidad sintáctica propia de la autoría humana.`;
+        metricDictamen.innerText = nivelRiesgo;
+    }
+}
+</script>
+
+</body>
+</html>
