@@ -230,33 +230,39 @@ function auditoriaPhishguard() {
     const conteoComas = (texto.match(/,/g) || []).length;
     const ratioComas = ((conteoComas / Math.max(conteoPalabras, 1)) * 100);
 
-    // Detección segura de viñetas/listas (puntos, guiones, asteriscos o números)
+    // Detección de patrones estructurales típicos de IA
     const tieneEmojisLista = /^[\s]*[•\-\*\d\+\>]|[\u1F60-\u1F64]/m.test(texto);
-    
-    const oraciones = texto.split(/[.!?]+/).filter(o => o.trim().length > 0);
+    const tieneEstructuraIa = /(\*\*.*?\*\*)|(^\s*[\*\-•]\s*[\u{1F300}-\u{1F9FF}🇵🇪🎉🥁🍲])/mu.test(texto);
+
+    // Separación por oraciones y saltos de línea (evalúa viñetas individualmente)
+    const oraciones = texto.split(/[.!?\n]+/).filter(o => o.trim().length > 0);
     const longitudes = oraciones.map(o => o.trim().split(/\s+/).length);
     
     const media = longitudes.reduce((a, b) => a + b, 0) / Math.max(longitudes.length, 1);
     const varianza = longitudes.reduce((a, b) => a + Math.pow(b - media, 2), 0) / Math.max(longitudes.length, 1);
     const stdLongitud = Math.sqrt(varianza);
 
-    // Algoritmo de estimación
-    const pplAprox = Math.max(15, Math.min(150, Math.round(stdLongitud * 12 + (100 - ratioComas * 2))));
+    // Cálculo de Perplejidad aproximada
+    const pplAprox = Math.max(15, Math.min(150, Math.round(stdLongitud * 10 + (100 - ratioComas * 2.5))));
 
-    let scoreIaBase = 50.0;
-    if (pplAprox < 85) scoreIaBase += 25;
-    if (ratioComas > 8.0) scoreIaBase += 15;
-    if (tieneEmojisLista) scoreIaBase += 10;
-    if (stdLongitud < 4.0 && oraciones.length > 2) scoreIaBase += 10;
+    let scoreIaBase = 40.0;
+
+    // Ponderación de riesgo
+    if (pplAprox < 85) scoreIaBase += 20;
+    if (ratioComas > 7.0) scoreIaBase += 15; 
+    if (tieneEmojisLista || tieneEstructuraIa) scoreIaBase += 20; // Recompensas por listas y emojis
+    if (texto.includes("**")) scoreIaBase += 15; // Detección de negritas de Markdown
+    if (stdLongitud < 5.0 && oraciones.length > 2) scoreIaBase += 10;
 
     const probIa = Math.min(99, Math.max(1, Math.round(scoreIaBase)));
 
+    // Actualización de la interfaz
     probValue.innerText = probIa + "%";
     progressFill.style.width = probIa + "%";
 
     metricPpl.innerText = pplAprox;
     metricComas.innerText = ratioComas.toFixed(1) + "%";
-    metricBullets.innerText = tieneEmojisLista ? "Detectada (Típica IA)" : "Orgánica";
+    metricBullets.innerText = (tieneEmojisLista || tieneEstructuraIa) ? "Sintética (Emojis/Markdown)" : "Orgánica";
 
     if (probIa >= 70) {
         const nivelRiesgo = "🔴 RIESGO ALTO";
