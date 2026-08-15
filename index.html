@@ -208,7 +208,7 @@
 
 <script>
 function auditoriaPhishguard() {
-    const texto = document.getElementById('inputText').value.trim();
+    const textoInput = document.getElementById('inputText');
     const verdictBox = document.getElementById('verdictBox');
     const probValue = document.getElementById('probValue');
     const progressFill = document.getElementById('progressFill');
@@ -216,6 +216,9 @@ function auditoriaPhishguard() {
     const metricPpl = document.getElementById('metricPpl');
     const metricComas = document.getElementById('metricComas');
     const metricBullets = document.getElementById('metricBullets');
+
+    if (!textoInput) return;
+    const texto = textoInput.value.trim();
 
     if (texto.length < 20) {
         verdictBox.innerHTML = "⚠️ <strong>Texto muy corto:</strong> Ingresa al menos 20 caracteres para analizar.";
@@ -227,7 +230,8 @@ function auditoriaPhishguard() {
     const conteoComas = (texto.match(/,/g) || []).length;
     const ratioComas = ((conteoComas / Math.max(conteoPalabras, 1)) * 100);
 
-    const tieneEmojisLista = /^\s*[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E0}-\u{1F1FF}]/m.test(texto);
+    // Detección segura de viñetas/listas (puntos, guiones, asteriscos o números)
+    const tieneEmojisLista = /^[\s]*[•\-\*\d\+\>]|[\u1F60-\u1F64]/m.test(texto);
     
     const oraciones = texto.split(/[.!?]+/).filter(o => o.trim().length > 0);
     const longitudes = oraciones.map(o => o.trim().split(/\s+/).length);
@@ -236,7 +240,7 @@ function auditoriaPhishguard() {
     const varianza = longitudes.reduce((a, b) => a + Math.pow(b - media, 2), 0) / Math.max(longitudes.length, 1);
     const stdLongitud = Math.sqrt(varianza);
 
-    // Algoritmo de estimación de Perplejidad y Score IA
+    // Algoritmo de estimación
     const pplAprox = Math.max(15, Math.min(150, Math.round(stdLongitud * 12 + (100 - ratioComas * 2))));
 
     let scoreIaBase = 50.0;
@@ -245,36 +249,35 @@ function auditoriaPhishguard() {
     if (tieneEmojisLista) scoreIaBase += 10;
     if (stdLongitud < 4.0 && oraciones.length > 2) scoreIaBase += 10;
 
-    const probIa = Math.min(99.0, Math.max(1.0, Math.round(scoreIaBase)));
+    const probIa = Math.min(99, Math.max(1, Math.round(scoreIaBase)));
 
-    probValue.innerText = `${probIa}%`;
-    progressFill.style.width = `${probIa}%`;
+    probValue.innerText = probIa + "%";
+    progressFill.style.width = probIa + "%";
 
     metricPpl.innerText = pplAprox;
-    metricComas.innerText = `${ratioComas.toFixed(1)}%`;
+    metricComas.innerText = ratioComas.toFixed(1) + "%";
     metricBullets.innerText = tieneEmojisLista ? "Detectada (Típica IA)" : "Orgánica";
 
     if (probIa >= 70) {
         const nivelRiesgo = "🔴 RIESGO ALTO";
         verdictBox.style.borderLeftColor = "#ef4444";
         progressFill.style.background = "#ef4444";
-        verdictBox.innerHTML = `🔴 <strong>Nivel de Riesgo ALTO (${probIa}% de IA):</strong> El texto presenta patrones automatizados rígidos, puntuación repetitiva o formatos sintéticos característicos de modelos generativos.`;
+        verdictBox.innerHTML = "🔴 <strong>Nivel de Riesgo ALTO (" + probIa + "% de IA):</strong> El texto presenta patrones automatizados rígidos, puntuación repetitiva o formatos sintéticos característicos de modelos generativos.";
         metricDictamen.innerText = nivelRiesgo;
     } else if (probIa >= 35) {
         const nivelRiesgo = "🟡 RIESGO MEDIO";
         verdictBox.style.borderLeftColor = "#eab308";
         progressFill.style.background = "#eab308";
-        verdictBox.innerHTML = `🟡 <strong>Nivel de Riesgo MEDIO (${probIa}% de IA):</strong> Detectada combinación de fragmentos manuales con posibles pasajes parafraseados o estructurados por IA.`;
+        verdictBox.innerHTML = "🟡 <strong>Nivel de Riesgo MEDIO (" + probIa + "% de IA):</strong> Detectada combinación de fragmentos manuales con posibles pasajes parafraseados o estructurados por IA.";
         metricDictamen.innerText = nivelRiesgo;
     } else {
         const nivelRiesgo = "🟢 RIESGO BAJO";
         verdictBox.style.borderLeftColor = "#22c55e";
         progressFill.style.background = "#22c55e";
-        verdictBox.innerHTML = `🟢 <strong>Nivel de Riesgo BAJO (${probIa}% de IA):</strong> Redacción orgánica y fluida con alta variabilidad sintáctica propia de la autoría humana.`;
+        verdictBox.innerHTML = "🟢 <strong>Nivel de Riesgo BAJO (" + probIa + "% de IA):</strong> Redacción orgánica y fluida con alta variabilidad sintáctica propia de la autoría humana.";
         metricDictamen.innerText = nivelRiesgo;
     }
 }
 </script>
-
 </body>
 </html>
