@@ -18,5 +18,7 @@
       "type": "image/jpeg",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "id": "/?source=pwa",
+  "description": "Herramienta de detección de Phishing y análisis estilométrico."
 }
