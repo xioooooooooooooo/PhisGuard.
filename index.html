@@ -54,7 +54,6 @@
         </ul>
     </div>
 </div>
-
 <script>
 function auditoriaPhishguard() {
     const textoInput = document.getElementById('inputText');
@@ -70,10 +69,13 @@ function auditoriaPhishguard() {
         return;
     }
 
-    // 1. PROCESAMIENTO DE ORACIONES Y PALABRAS
+    // 1. LIMPIEZA Y PROCESAMIENTO DE ORACIONES Y PALABRAS
     const palabras = texto.toLowerCase().match(/[a-záéíóúñü0-9]+/gi) || [];
     const totalPalabras = palabras.length;
-    const oraciones = texto.split(/[.!?\n]+/).filter(o => o.trim().length > 0);
+    
+    // Normalizar oraciones eliminando viñetas para evitar distorsionar la longitud real
+    const textoLimpio = texto.replace(/^[\s]*[•\-\*\d\+\>]\s*/gm, '');
+    const oraciones = textoLimpio.split(/[.!?\n]+/).filter(o => o.trim().length > 0);
     const longitudesOraciones = oraciones.map(o => o.trim().split(/\s+/).length);
 
     // 2. CÁLCULO DE BURSTINESS (VARIACIÓN DE RITMO Y ORACIONES)
@@ -94,12 +96,11 @@ function auditoriaPhishguard() {
     const conjuntoPalabras = new Set(palabras);
     const ttr = totalPalabras > 0 ? (conjuntoPalabras.size / totalPalabras) : 1;
 
-    // 4. DETECCIÓN DE HUELLAS DIGITALES Y CONECTORES
+    // 4. DETECCIÓN DE HUELLAS DIGITALES Y CONECTORES TÍPICOS DE IA
     const conectoresMecanicos = [
         "en resumen", "por lo tanto", "es fundamental destacar", "cabe resaltar",
         "en conclusión", "por consiguiente", "en el dinámico mundo de", "es importante mencionar",
-        "como se mencionó anteriormente", "en primer lugar", "en última instancia", "además de esto",
-        "estimados colegas", "se recomienda", "tras la aprobación"
+        "como se mencionó anteriormente", "en primer lugar", "en última instancia", "además de esto"
     ];
     let contadorHuellas = 0;
     conectoresMecanicos.forEach(patron => {
@@ -115,32 +116,34 @@ function auditoriaPhishguard() {
     const tienePhishing = patronPhishing.test(texto);
     const tieneUrl = /(https?:\/\/[^\s]+)/i.test(texto);
 
-    // 6. PUNTUACIÓN PONDERADA (CALIBRACIÓN GENERAL)
+    // 6. PUNTUACIÓN PONDERADA
     let scoreIA = 0;
 
-    // Evaluamos homogeneidad de ritmo
+    // Ritmo monótono o corporativo
     if (oraciones.length > 1) {
-        if (stdLongitud < 3.5 && ratioMaxMin < 3.0) {
-            scoreIA += 25; // Ritmo sintético o corporativo estándar
-        } else if (stdLongitud < 5.0) {
+        if (stdLongitud < 3.0) {
+            scoreIA += 20;
+        } else if (stdLongitud < 4.5) {
             scoreIA += 10;
         }
     }
 
-    // Evaluamos diversidad de vocabulario (TTR)
-    if (ttr < 0.70 && totalPalabras > 20) {
+    // Variedad de vocabulario (TTR)
+    if (ttr < 0.60 && totalPalabras > 25) {
         scoreIA += 15;
+    } else if (ttr < 0.70 && totalPalabras > 15) {
+        scoreIA += 10;
     }
 
-    // Ponderación de patrones
+    // Ponderación fuerte para marcas directas de LLM y Phishing
     if (contadorHuellas > 0) scoreIA += (contadorHuellas * 15);
-    if (tieneMarkdownEstructurado) scoreIA += 30;
-    if (tienePhishing) scoreIA += 30;
+    if (tieneMarkdownEstructurado) scoreIA += 35;
+    if (tienePhishing) scoreIA += 35;
     if (tieneUrl) scoreIA += 20;
 
     const probFinal = Math.min(99, Math.max(1, Math.round(scoreIA)));
 
-    // 7. ACTUALIZACIÓN DE INTERFAZ
+    // 7. ACTUALIZACIÓN DE INTERFAZ Y CLASIFICACIÓN DE RANGOS
     probValue.innerText = probFinal + "%";
     progressFill.style.width = probFinal + "%";
 
@@ -168,5 +171,6 @@ function auditoriaPhishguard() {
     }
 }
 </script>
+
 </body>
 </html>
