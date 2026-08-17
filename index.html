@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PhishGuard</title>
+    
+    <!-- PWA CONFIGURATION -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b0718">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <style>
         * {
             box-sizing: border-box;
@@ -30,7 +37,6 @@
             border: 1px solid #231842;
         }
 
-        /* HEADER Y LOGO TOTALMENTE CENTRADOS Y VISIBLES */
         .app-header {
             display: flex;
             justify-content: center;
@@ -58,11 +64,6 @@
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .logo-img:hover {
-            transform: scale(1.08);
-            box-shadow: 0 0 28px rgba(212, 175, 55, 0.9);
-        }
-
         .brand-title {
             color: #ec4899;
             font-size: 38px;
@@ -70,10 +71,7 @@
             letter-spacing: 0.5px;
         }
 
-        /* ÁREA DE TEXTO Y BOTÓN */
-        .input-group {
-            margin-bottom: 20px;
-        }
+        .input-group { margin-bottom: 20px; }
 
         textarea {
             width: 100%;
@@ -88,10 +86,6 @@
             outline: none;
         }
 
-        textarea:focus {
-            border-color: #ec4899;
-        }
-
         button {
             background: linear-gradient(135deg, #ec4899, #8b5cf6);
             color: white;
@@ -101,15 +95,9 @@
             font-weight: bold;
             border-radius: 8px;
             cursor: pointer;
-            transition: opacity 0.2s;
             width: 100%;
         }
 
-        button:hover {
-            opacity: 0.9;
-        }
-
-        /* RESULTADOS Y PANEL */
         .results-panel {
             margin-top: 25px;
             background: #181030;
@@ -118,73 +106,19 @@
             border: 1px solid #291c4d;
         }
 
-        .progress-bar-container {
-            height: 12px;
-            background: #2b1d52;
-            border-radius: 6px;
-            overflow: hidden;
-            margin: 15px 0;
-        }
-
-        .progress-fill {
-            height: 100%;
-            width: 0%;
-            background: #22c55e;
-            transition: width 0.4s ease, background 0.4s ease;
-        }
-
-        .verdict-box {
-            padding: 15px;
-            border-radius: 6px;
-            background: #221845;
-            border-left: 5px solid #22c55e;
-            margin-bottom: 20px;
-            font-size: 15px;
-        }
-
-        /* MÉTRICAS */
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .metric-card {
-            background: #1f1442;
-            padding: 12px 15px;
-            border-radius: 6px;
-            border: 1px solid #2d1d5e;
-        }
-
-        .metric-card label {
-            display: block;
-            font-size: 12px;
-            color: #a78bfa;
-            margin-bottom: 5px;
-        }
-
-        .metric-card span {
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .prob-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .prob-value {
-            font-size: 24px;
-            font-weight: bold;
-        }
+        .progress-bar-container { height: 12px; background: #2b1d52; border-radius: 6px; overflow: hidden; margin: 15px 0; }
+        .progress-fill { height: 100%; width: 0%; background: #22c55e; transition: width 0.4s ease; }
+        .verdict-box { padding: 15px; border-radius: 6px; background: #221845; border-left: 5px solid #22c55e; margin-bottom: 20px; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px; }
+        .metric-card { background: #1f1442; padding: 12px 15px; border-radius: 6px; border: 1px solid #2d1d5e; }
+        .metric-card label { display: block; font-size: 12px; color: #a78bfa; margin-bottom: 5px; }
+        .prob-header { display: flex; justify-content: space-between; align-items: center; }
+        .prob-value { font-size: 24px; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- ENCABEZADO CENTRADO -->
     <header class="app-header">
         <div class="logo-container">
             <img src="https://raw.githubusercontent.com/xioooooooooooooo/PhisGuard./main/logo_phishguard.jpg" alt="PhishGuard Logo" class="logo-img">
@@ -192,48 +126,25 @@
         </div>
     </header>
 
-    <!-- INGRESO DE TEXTO -->
     <div class="input-group">
         <textarea id="inputText" placeholder="Pega el texto aquí para analizarlo..."></textarea>
     </div>
     <button onclick="auditoriaPhishguard()">Analizar Texto</button>
 
-    <!-- PANEL DE RESULTADOS -->
     <div class="results-panel">
         <div class="prob-header">
             <span>Probabilidad de Riesgo:</span>
             <span id="probValue" class="prob-value">0%</span>
         </div>
-        
-        <div class="progress-bar-container">
-            <div id="progressFill" class="progress-fill"></div>
-        </div>
-
-        <div id="verdictBox" class="verdict-box">
-            Esperando texto para análisis...
-        </div>
+        <div class="progress-bar-container"><div id="progressFill" class="progress-fill"></div></div>
+        <div id="verdictBox" class="verdict-box">Esperando texto para análisis...</div>
 
         <div class="metrics-grid">
-            <div class="metric-card">
-                <label>Variedad Léxica (TTR)</label>
-                <span id="metricPpl">-</span>
-            </div>
-            <div class="metric-card">
-                <label>Variación Sintáctica (Burstiness)</label>
-                <span id="metricBurstiness">-</span>
-            </div>
-            <div class="metric-card">
-                <label>Conectores Mecánicos / IA</label>
-                <span id="metricHuellas">-</span>
-            </div>
-            <div class="metric-card">
-                <label>Indicadores de Phishing</label>
-                <span id="metricPhishing">-</span>
-            </div>
-            <div class="metric-card">
-                <label>Dictamen Final</label>
-                <span id="metricDictamen">-</span>
-            </div>
+            <div class="metric-card"><label>Variedad Léxica (TTR)</label><span id="metricPpl">-</span></div>
+            <div class="metric-card"><label>Variación Sintáctica (Burstiness)</label><span id="metricBurstiness">-</span></div>
+            <div class="metric-card"><label>Conectores Mecánicos / IA</label><span id="metricHuellas">-</span></div>
+            <div class="metric-card"><label>Indicadores de Phishing</label><span id="metricPhishing">-</span></div>
+            <div class="metric-card"><label>Dictamen Final</label><span id="metricDictamen">-</span></div>
         </div>
     </div>
 </div>
@@ -253,13 +164,11 @@ function auditoriaPhishguard() {
         return;
     }
 
-    // 1. ANÁLISIS LÉXICO
     const palabras = texto.toLowerCase().match(/[a-záéíóúñü0-9]+/gi) || [];
     const totalPalabras = palabras.length;
     const conjuntoPalabras = new Set(palabras);
     const ttr = totalPalabras > 0 ? (conjuntoPalabras.size / totalPalabras) : 1;
 
-    // 2. DETECCIÓN DE PATRONES DE IA Y PHISHING (RIESGO ALTO)
     const tieneMarkdown = /^[\s]*[•\-\*\d\+\>]/m.test(texto) || texto.includes("**");
     
     const conectoresMecanicos = [
@@ -279,61 +188,48 @@ function auditoriaPhishguard() {
     const tienePhishing = patronPhishing.test(texto);
     const tieneUrl = /(https?:\/\/[^\s]+)/i.test(texto);
 
-    // 3. DETECCIÓN DE ELEMENTOS COLOQUIALES / NARRATIVOS (RIESGO BAJO)
     const patronColoquial = /\b(oye|disculpa|ajá|jajaja|o sea|bueno|avísame|pucha|mira|bro|chao|saludos|milo j|canto|canciones|publico|tráfico|avenida|hola|genial|gracias)\b/i;
     const tieneColoquial = patronColoquial.test(texto);
 
-    // 4. CÁLCULO DE BURSTINESS
     const oraciones = texto.replace(/^[\s]*[•\-\*\d\+\>]\s*/gm, '').split(/[.!?\n]+/).filter(o => o.trim().length > 0);
     let stdLongitud = 0;
 
     if (oraciones.length > 1) {
         const longitudesOraciones = oraciones.map(o => o.trim().split(/\s+/).length);
-        const media = longitudesOraciones.reduce((a, b) => a + b, 0) / longitudesOraciones.length;
-        const varianza = longitudesOraciones.reduce((a, b) => a + Math.pow(b - media, 2), 0) / longitudesOraciones.length;
+        const media = longitudesOraciones.reduce((a, b) => a + b, 0) / oraciones.length;
+        const varianza = longitudesOraciones.reduce((a, b) => a + Math.pow(b - media, 2), 0) / oraciones.length;
         stdLongitud = Math.sqrt(varianza);
     }
 
-    // 5. EVALUACIÓN Y ASIGNACIÓN DE PUNTAJE
     let probFinal = 10;
+    if (tienePhishing || tieneUrl) { probFinal = 90; } 
+    else if (tieneMarkdown || contadorHuellas > 0) { probFinal = 75 + (contadorHuellas * 5); if (probFinal > 95) probFinal = 95; } 
+    else if (!tieneColoquial) { probFinal = 40; } 
+    else { probFinal = 10; }
 
-    if (tienePhishing || tieneUrl) {
-        probFinal = 90;
-    } else if (tieneMarkdown || contadorHuellas > 0) {
-        probFinal = 75 + (contadorHuellas * 5);
-        if (probFinal > 95) probFinal = 95;
-    } else if (!tieneColoquial) {
-        // Texto formal / corporativo -> RIESGO MEDIO
-        probFinal = 40;
-    } else {
-        // Texto informal / conversacional -> RIESGO BAJO
-        probFinal = 10;
-    }
-
-    // 6. ACTUALIZACIÓN DE INTERFAZ
     probValue.innerText = probFinal + "%";
     progressFill.style.width = probFinal + "%";
 
-    document.getElementById('metricPpl').innerText = (ttr < 0.75) ? "Baja (Predecible / Estándar)" : "Alta (Impredecible / Humano)";
-    document.getElementById('metricBurstiness').innerText = (stdLongitud < 3.0) ? "Baja (Estructura Monótona)" : "Alta (Ritmo Dinámico)";
-    document.getElementById('metricHuellas').innerText = contadorHuellas > 0 ? `${contadorHuellas} conector(es) detectado(s)` : (tieneMarkdown ? "Formato Markdown detectado" : "Ninguna");
-    document.getElementById('metricPhishing').innerText = (tienePhishing || tieneUrl) ? "Detectados (Anzuelos/Enlaces)" : "Ninguno";
+    document.getElementById('metricPpl').innerText = (ttr < 0.75) ? "Baja" : "Alta";
+    document.getElementById('metricBurstiness').innerText = (stdLongitud < 3.0) ? "Baja" : "Alta";
+    document.getElementById('metricHuellas').innerText = contadorHuellas > 0 ? `${contadorHuellas}` : "Ninguna";
+    document.getElementById('metricPhishing').innerText = (tienePhishing || tieneUrl) ? "Detectados" : "Ninguno";
 
     if (probFinal >= 60) {
         verdictBox.style.borderLeftColor = "#ef4444";
         progressFill.style.background = "#ef4444";
-        verdictBox.innerHTML = "🔴 <strong>ALTO RIESGO (" + probFinal + "%):</strong> El texto muestra sintaxis de IA (Markdown/conectores) o indicadores de Phishing.";
-        document.getElementById('metricDictamen').innerText = "🔴 RIESGO ALTO (IA / Phishing)";
+        verdictBox.innerHTML = "🔴 <strong>ALTO RIESGO (" + probFinal + "%):</strong> El texto muestra sintaxis de IA o Phishing.";
+        document.getElementById('metricDictamen').innerText = "🔴 RIESGO ALTO";
     } else if (probFinal >= 30) {
         verdictBox.style.borderLeftColor = "#eab308";
         progressFill.style.background = "#eab308";
-        verdictBox.innerHTML = "🟡 <strong>RIESGO MEDIO (" + probFinal + "%):</strong> Redacción formal o corporativa estandarizada.";
+        verdictBox.innerHTML = "🟡 <strong>RIESGO MEDIO (" + probFinal + "%):</strong> Redacción formal o corporativa.";
         document.getElementById('metricDictamen').innerText = "🟡 RIESGO MEDIO";
     } else {
         verdictBox.style.borderLeftColor = "#22c55e";
         progressFill.style.background = "#22c55e";
-        verdictBox.innerHTML = "🟢 <strong>BAJO RIESGO (" + probFinal + "%):</strong> Lenguaje informal, variado y de origen humano.";
-        document.getElementById('metricDictamen').innerText = "🟢 RIESGO BAJO (Humano)";
+        verdictBox.innerHTML = "🟢 <strong>BAJO RIESGO (" + probFinal + "%):</strong> Lenguaje variado y natural.";
+        document.getElementById('metricDictamen').innerText = "🟢 RIESGO BAJO";
     }
 }
 </script>
