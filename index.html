@@ -90,7 +90,7 @@ function auditoriaPhishguard() {
         stdLongitud = 6.0;
     }
 
-    // 3. CÁLCULO DE PERPLEJIDAD & ENTROPÍA (TTR - Type Token Ratio)
+    // 3. CÁLCULO DE PERPLEJIDAD & ENTROPÍA (TTR)
     const conjuntoPalabras = new Set(palabras);
     const ttr = totalPalabras > 0 ? (conjuntoPalabras.size / totalPalabras) : 1;
 
@@ -107,6 +107,7 @@ function auditoriaPhishguard() {
         if (coincidencias) contadorHuellas += coincidencias.length;
     });
 
+    // Detectar viñetas, listas o negritas (Markdown típico de IA)
     const tieneMarkdownEstructurado = /^[\s]*[•\-\*\d\+\>]/m.test(texto) || texto.includes("**");
 
     // 5. DETECCIÓN DE PHISHING Y URGENCIA
@@ -114,26 +115,25 @@ function auditoriaPhishguard() {
     const tienePhishing = patronPhishing.test(texto);
     const tieneUrl = /(https?:\/\/[^\s]+)/i.test(texto);
 
-    // 6. PUNTUACIÓN PONDERADA
+    // 6. PUNTUACIÓN PONDERADA (REAJUSTADA)
     let scoreIA = 0;
 
     if (oraciones.length > 1) {
-        if (stdLongitud < 2.0 && ratioMaxMin < 2.0) {
-            scoreIA += 30;
-        } else if (stdLongitud < 3.5) {
+        if (stdLongitud < 2.5 && ratioMaxMin < 2.5) {
+            scoreIA += 25;
+        } else if (stdLongitud < 4.0) {
             scoreIA += 15;
         }
     }
 
-    if (ttr < 0.45 && totalPalabras > 30) {
+    if (ttr < 0.60 && totalPalabras > 15) {
         scoreIA += 20;
-    } else if (ttr < 0.60 && totalPalabras > 20) {
-        scoreIA += 10;
     }
 
-    if (contadorHuellas > 0) scoreIA += (contadorHuellas * 15);
-    if (tieneMarkdownEstructurado) scoreIA += 15;
-    if (tienePhishing) scoreIA += 25;
+    // Ponderaciones aumentadas para huellas de IA
+    if (contadorHuellas > 0) scoreIA += (contadorHuellas * 20);
+    if (tieneMarkdownEstructurado) scoreIA += 30;
+    if (tienePhishing) scoreIA += 30;
     if (tieneUrl) scoreIA += 20;
 
     const probFinal = Math.min(99, Math.max(1, Math.round(scoreIA)));
@@ -142,10 +142,10 @@ function auditoriaPhishguard() {
     probValue.innerText = probFinal + "%";
     progressFill.style.width = probFinal + "%";
 
-    document.getElementById('metricPpl').innerText = (ttr < 0.50 && totalPalabras > 25) ? "Baja (Predecible / LLM)" : "Alta (Impredecible / Humano)";
-    document.getElementById('metricBurstiness').innerText = (stdLongitud < 2.5 && oraciones.length > 1) ? "Baja (Estructura Monótona)" : "Alta (Ritmo Dinámico)";
-    document.getElementById('metricEntropia').innerText = (ttr < 0.55) ? "Sintética / Homogénea" : "Orgánica / Heterogénea";
-    document.getElementById('metricHuellas').innerText = contadorHuellas > 0 ? `${contadorHuellas} conectores detectados` : (tieneMarkdownEstructurado ? "Formato Markdown detectado" : "Ninguna");
+    document.getElementById('metricPpl').innerText = (ttr < 0.55) ? "Baja (Predecible / LLM)" : "Alta (Impredecible / Humano)";
+    document.getElementById('metricBurstiness').innerText = (stdLongitud < 2.5) ? "Baja (Estructura Monótona)" : "Alta (Ritmo Dinámico)";
+    document.getElementById('metricEntropia').innerText = (ttr < 0.60) ? "Sintética / Homogénea" : "Orgánica / Heterogénea";
+    document.getElementById('metricHuellas').innerText = contadorHuellas > 0 ? `${contadorHuellas} conector(es) detectado(s)` : (tieneMarkdownEstructurado ? "Formato Markdown detectado" : "Ninguna");
     document.getElementById('metricPhishing').innerText = (tienePhishing || tieneUrl) ? "Detectados (Anzuelos/Enlaces)" : "Ninguno";
 
     if (probFinal >= 60) {
