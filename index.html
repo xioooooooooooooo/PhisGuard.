@@ -76,7 +76,7 @@ function auditoriaPhishguard() {
     const oraciones = texto.split(/[.!?\n]+/).filter(o => o.trim().length > 0);
     const longitudesOraciones = oraciones.map(o => o.trim().split(/\s+/).length);
 
-    // 2. CÁLCULO DE BURSTINESS (VARIACIÓN DE ORACIONES)
+    // 2. CÁLCULO DE BURSTINESS (VARIACIÓN DE RITMO Y ORACIONES)
     let stdLongitud = 0;
     let ratioMaxMin = 1;
     if (oraciones.length > 1) {
@@ -90,15 +90,16 @@ function auditoriaPhishguard() {
         stdLongitud = 6.0;
     }
 
-    // 3. CÁLCULO DE PERPLEJIDAD & ENTROPÍA (TTR)
+    // 3. CÁLCULO DE PERPLEJIDAD & ENTROPÍA (TTR - Variedad de Vocabulario)
     const conjuntoPalabras = new Set(palabras);
     const ttr = totalPalabras > 0 ? (conjuntoPalabras.size / totalPalabras) : 1;
 
-    // 4. DETECCIÓN DE HUELLAS DIGITALES LLM
+    // 4. DETECCIÓN DE HUELLAS DIGITALES Y CONECTORES
     const conectoresMecanicos = [
         "en resumen", "por lo tanto", "es fundamental destacar", "cabe resaltar",
         "en conclusión", "por consiguiente", "en el dinámico mundo de", "es importante mencionar",
-        "como se mencionó anteriormente", "en primer lugar", "en última instancia", "además de esto"
+        "como se mencionó anteriormente", "en primer lugar", "en última instancia", "además de esto",
+        "estimados colegas", "se recomienda", "tras la aprobación"
     ];
     let contadorHuellas = 0;
     conectoresMecanicos.forEach(patron => {
@@ -107,7 +108,6 @@ function auditoriaPhishguard() {
         if (coincidencias) contadorHuellas += coincidencias.length;
     });
 
-    // Detectar viñetas, listas o negritas (Markdown típico de IA)
     const tieneMarkdownEstructurado = /^[\s]*[•\-\*\d\+\>]/m.test(texto) || texto.includes("**");
 
     // 5. DETECCIÓN DE PHISHING Y URGENCIA
@@ -115,23 +115,25 @@ function auditoriaPhishguard() {
     const tienePhishing = patronPhishing.test(texto);
     const tieneUrl = /(https?:\/\/[^\s]+)/i.test(texto);
 
-    // 6. PUNTUACIÓN PONDERADA (REAJUSTADA)
+    // 6. PUNTUACIÓN PONDERADA (CALIBRACIÓN GENERAL)
     let scoreIA = 0;
 
+    // Evaluamos homogeneidad de ritmo
     if (oraciones.length > 1) {
-        if (stdLongitud < 2.5 && ratioMaxMin < 2.5) {
-            scoreIA += 25;
-        } else if (stdLongitud < 4.0) {
-            scoreIA += 15;
+        if (stdLongitud < 3.5 && ratioMaxMin < 3.0) {
+            scoreIA += 25; // Ritmo sintético o corporativo estándar
+        } else if (stdLongitud < 5.0) {
+            scoreIA += 10;
         }
     }
 
-    if (ttr < 0.60 && totalPalabras > 15) {
-        scoreIA += 20;
+    // Evaluamos diversidad de vocabulario (TTR)
+    if (ttr < 0.70 && totalPalabras > 20) {
+        scoreIA += 15;
     }
 
-    // Ponderaciones aumentadas para huellas de IA
-    if (contadorHuellas > 0) scoreIA += (contadorHuellas * 20);
+    // Ponderación de patrones
+    if (contadorHuellas > 0) scoreIA += (contadorHuellas * 15);
     if (tieneMarkdownEstructurado) scoreIA += 30;
     if (tienePhishing) scoreIA += 30;
     if (tieneUrl) scoreIA += 20;
@@ -142,9 +144,9 @@ function auditoriaPhishguard() {
     probValue.innerText = probFinal + "%";
     progressFill.style.width = probFinal + "%";
 
-    document.getElementById('metricPpl').innerText = (ttr < 0.55) ? "Baja (Predecible / LLM)" : "Alta (Impredecible / Humano)";
-    document.getElementById('metricBurstiness').innerText = (stdLongitud < 2.5) ? "Baja (Estructura Monótona)" : "Alta (Ritmo Dinámico)";
-    document.getElementById('metricEntropia').innerText = (ttr < 0.60) ? "Sintética / Homogénea" : "Orgánica / Heterogénea";
+    document.getElementById('metricPpl').innerText = (ttr < 0.65) ? "Baja (Predecible / Estándar)" : "Alta (Impredecible / Humano)";
+    document.getElementById('metricBurstiness').innerText = (stdLongitud < 3.5) ? "Baja (Estructura Monótona)" : "Alta (Ritmo Dinámico)";
+    document.getElementById('metricEntropia').innerText = (ttr < 0.70) ? "Sintética / Homogénea" : "Orgánica / Heterogénea";
     document.getElementById('metricHuellas').innerText = contadorHuellas > 0 ? `${contadorHuellas} conector(es) detectado(s)` : (tieneMarkdownEstructurado ? "Formato Markdown detectado" : "Ninguna");
     document.getElementById('metricPhishing').innerText = (tienePhishing || tieneUrl) ? "Detectados (Anzuelos/Enlaces)" : "Ninguno";
 
@@ -166,6 +168,5 @@ function auditoriaPhishguard() {
     }
 }
 </script>
-
 </body>
 </html>
