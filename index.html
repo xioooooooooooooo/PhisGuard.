@@ -69,39 +69,21 @@ function auditoriaPhishguard() {
         return;
     }
 
-    // 1. LIMPIEZA Y PROCESAMIENTO DE ORACIONES Y PALABRAS
+    // 1. ANÁLISIS DE PALABRAS Y VOCABULARIO
     const palabras = texto.toLowerCase().match(/[a-záéíóúñü0-9]+/gi) || [];
     const totalPalabras = palabras.length;
-    
-    // Normalizar oraciones eliminando viñetas para evitar distorsionar la longitud real
-    const textoLimpio = texto.replace(/^[\s]*[•\-\*\d\+\>]\s*/gm, '');
-    const oraciones = textoLimpio.split(/[.!?\n]+/).filter(o => o.trim().length > 0);
-    const longitudesOraciones = oraciones.map(o => o.trim().split(/\s+/).length);
-
-    // 2. CÁLCULO DE BURSTINESS (VARIACIÓN DE RITMO Y ORACIONES)
-    let stdLongitud = 0;
-    let ratioMaxMin = 1;
-    if (oraciones.length > 1) {
-        const media = longitudesOraciones.reduce((a, b) => a + b, 0) / longitudesOraciones.length;
-        const varianza = longitudesOraciones.reduce((a, b) => a + Math.pow(b - media, 2), 0) / longitudesOraciones.length;
-        stdLongitud = Math.sqrt(varianza);
-        const minLen = Math.min(...longitudesOraciones);
-        const maxLen = Math.max(...longitudesOraciones);
-        ratioMaxMin = maxLen / Math.max(1, minLen);
-    } else {
-        stdLongitud = 6.0;
-    }
-
-    // 3. CÁLCULO DE PERPLEJIDAD & ENTROPÍA (TTR - Variedad de Vocabulario)
     const conjuntoPalabras = new Set(palabras);
     const ttr = totalPalabras > 0 ? (conjuntoPalabras.size / totalPalabras) : 1;
 
-    // 4. DETECCIÓN DE HUELLAS DIGITALES Y CONECTORES TÍPICOS DE IA
+    // 2. DETECCIÓN DE PATRONES ESPECÍFICOS
+    const tieneMarkdown = /^[\s]*[•\-\*\d\+\>]/m.test(texto) || texto.includes("**");
+    
     const conectoresMecanicos = [
         "en resumen", "por lo tanto", "es fundamental destacar", "cabe resaltar",
         "en conclusión", "por consiguiente", "en el dinámico mundo de", "es importante mencionar",
         "como se mencionó anteriormente", "en primer lugar", "en última instancia", "además de esto"
     ];
+    
     let contadorHuellas = 0;
     conectoresMecanicos.forEach(patron => {
         const regex = new RegExp("\\b" + patron + "\\b", "gi");
@@ -109,64 +91,62 @@ function auditoriaPhishguard() {
         if (coincidencias) contadorHuellas += coincidencias.length;
     });
 
-    const tieneMarkdownEstructurado = /^[\s]*[•\-\*\d\+\>]/m.test(texto) || texto.includes("**");
-
-    // 5. DETECCIÓN DE PHISHING Y URGENCIA
     const patronPhishing = /(felicidades|ganado|premio|reclamar|última oportunidad|cuenta suspendida|confirmar tu identidad|inmediatamente|accede al enlace|verificación requerida)/i;
     const tienePhishing = patronPhishing.test(texto);
     const tieneUrl = /(https?:\/\/[^\s]+)/i.test(texto);
 
-    // 6. PUNTUACIÓN PONDERADA
-    let scoreIA = 0;
-
-    // Ritmo monótono o corporativo
+    // 3. CÁLCULO DE BURSTINESS (ORACIONES)
+    const oraciones = texto.replace(/^[\s]*[•\-\*\d\+\>]\s*/gm, '').split(/[.!?\n]+/).filter(o => o.trim().length > 0);
+    const longitudesOraciones = oraciones.map(o => o.trim().split(/\s+/).length);
+    let stdLongitud = 0;
     if (oraciones.length > 1) {
-        if (stdLongitud < 3.0) {
-            scoreIA += 20;
-        } else if (stdLongitud < 4.5) {
-            scoreIA += 10;
-        }
+        const media = longitudesOraciones.reduce((a, b) => a + b, 0) / longitudesOraciones.length;
+        const varianza = longitudesOraciones.reduce((a, b) => a + Math.pow(b - media, 2), 0) / longitudesOraciones.length;
+        stdLongitud = Math.sqrt(varianza);
     }
 
-    // Variedad de vocabulario (TTR)
-    if (ttr < 0.60 && totalPalabras > 25) {
-        scoreIA += 15;
-    } else if (ttr < 0.70 && totalPalabras > 15) {
-        scoreIA += 10;
+    // 4. ASIGNACIÓN DIRECTA DE SCORE SEGÚN CONDICIONES
+    let probFinal = 10;
+
+    if (tienePhishing || tieneUrl) {
+        // CASO 4: PHISHING -> RIESGO ALTO
+        probFinal = 90;
+    } else if (tieneMarkdown || contadorHuellas > 0) {
+        // CASO 3: FORMATO IA / LLM -> RIESGO ALTO
+        probFinal = 75 + (contadorHuellas * 5);
+        if (probFinal > 95) probFinal = 95;
+    } else if (ttr < 0.85 || stdLongitud < 4.0) {
+        // CASO 2: TEXTO FORMAL / CORPORATIVO (Sin Markdown ni conectores) -> RIESGO MEDIO
+        probFinal = 40;
+    } else {
+        // CASO 1: TEXTO CASUAL / INFORMAL -> RIESGO BAJO
+        probFinal = 10;
     }
 
-    // Ponderación fuerte para marcas directas de LLM y Phishing
-    if (contadorHuellas > 0) scoreIA += (contadorHuellas * 15);
-    if (tieneMarkdownEstructurado) scoreIA += 35;
-    if (tienePhishing) scoreIA += 35;
-    if (tieneUrl) scoreIA += 20;
-
-    const probFinal = Math.min(99, Math.max(1, Math.round(scoreIA)));
-
-    // 7. ACTUALIZACIÓN DE INTERFAZ Y CLASIFICACIÓN DE RANGOS
+    // 5. ACTUALIZACIÓN DE INTERFAZ
     probValue.innerText = probFinal + "%";
     progressFill.style.width = probFinal + "%";
 
-    document.getElementById('metricPpl').innerText = (ttr < 0.65) ? "Baja (Predecible / Estándar)" : "Alta (Impredecible / Humano)";
+    document.getElementById('metricPpl').innerText = (ttr < 0.70) ? "Baja (Predecible / Estándar)" : "Alta (Impredecible / Humano)";
     document.getElementById('metricBurstiness').innerText = (stdLongitud < 3.5) ? "Baja (Estructura Monótona)" : "Alta (Ritmo Dinámico)";
-    document.getElementById('metricEntropia').innerText = (ttr < 0.70) ? "Sintética / Homogénea" : "Orgánica / Heterogénea";
-    document.getElementById('metricHuellas').innerText = contadorHuellas > 0 ? `${contadorHuellas} conector(es) detectado(s)` : (tieneMarkdownEstructurado ? "Formato Markdown detectado" : "Ninguna");
+    document.getElementById('metricEntropia').innerText = (ttr < 0.75) ? "Sintética / Homogénea" : "Orgánica / Heterogénea";
+    document.getElementById('metricHuellas').innerText = contadorHuellas > 0 ? `${contadorHuellas} conector(es) detectado(s)` : (tieneMarkdown ? "Formato Markdown detectado" : "Ninguna");
     document.getElementById('metricPhishing').innerText = (tienePhishing || tieneUrl) ? "Detectados (Anzuelos/Enlaces)" : "Ninguno";
 
     if (probFinal >= 60) {
         verdictBox.style.borderLeftColor = "#ef4444";
         progressFill.style.background = "#ef4444";
-        verdictBox.innerHTML = "🔴 <strong>ALTO RIESGO (" + probFinal + "%):</strong> El texto muestra baja ráfaga, alta predecibilidad o patrones de phishing/LLM.";
+        verdictBox.innerHTML = "🔴 <strong>ALTO RIESGO (" + probFinal + "%):</strong> El texto muestra sintaxis de IA (Markdown/conectores) o indicadores de Phishing.";
         document.getElementById('metricDictamen').innerText = "🔴 RIESGO ALTO (IA / Phishing)";
     } else if (probFinal >= 30) {
         verdictBox.style.borderLeftColor = "#eab308";
         progressFill.style.background = "#eab308";
-        verdictBox.innerHTML = "🟡 <strong>RIESGO MEDIO (" + probFinal + "%):</strong> Presenta conectores formales o ritmo relativamente homogéneo.";
+        verdictBox.innerHTML = "🟡 <strong>RIESGO MEDIO (" + probFinal + "%):</strong> Redacción formal o corporativa estandarizada.";
         document.getElementById('metricDictamen').innerText = "🟡 RIESGO MEDIO";
     } else {
         verdictBox.style.borderLeftColor = "#22c55e";
         progressFill.style.background = "#22c55e";
-        verdictBox.innerHTML = "🟢 <strong>BAJO RIESGO (" + probFinal + "%):</strong> Alta variación sintáctica y vocabulario impredecible (Humano).";
+        verdictBox.innerHTML = "🟢 <strong>BAJO RIESGO (" + probFinal + "%):</strong> Lenguaje informal, variado y de origen humano.";
         document.getElementById('metricDictamen').innerText = "🟢 RIESGO BAJO (Humano)";
     }
 }
