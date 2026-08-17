@@ -75,7 +75,7 @@ function auditoriaPhishguard() {
     const conjuntoPalabras = new Set(palabras);
     const ttr = totalPalabras > 0 ? (conjuntoPalabras.size / totalPalabras) : 1;
 
-    // 2. DETECCIÓN DE PATRONES DE IA Y PHISHING
+    // 2. DETECCIÓN DE PATRONES ESPECÍFICOS
     const tieneMarkdown = /^[\s]*[•\-\*\d\+\>]/m.test(texto) || texto.includes("**");
     
     const conectoresMecanicos = [
@@ -91,11 +91,15 @@ function auditoriaPhishguard() {
         if (coincidencias) contadorHuellas += coincidencias.length;
     });
 
+    // Detectores coloquiales / informales (Indicador exclusivo de origen humano casual)
+    const patronColoquial = /(oye|disculpa|ajá|jajaja|o sea|bueno|avísame|pucha|mira|bro|chao|saludos|milo j|canto|canciones|publico|tráfico|avenida)/i;
+    const tieneColoquial = patronColoquial.test(texto);
+
     const patronPhishing = /(felicidades|ganado|premio|reclamar|última oportunidad|cuenta suspendida|confirmar tu identidad|inmediatamente|accede al enlace|verificación requerida)/i;
     const tienePhishing = patronPhishing.test(texto);
     const tieneUrl = /(https?:\/\/[^\s]+)/i.test(texto);
 
-    // 3. CÁLCULO DE BURSTINESS (Fluidez de oraciones / cláusulas)
+    // 3. CÁLCULO DE BURSTINESS
     const oraciones = texto.replace(/^[\s]*[•\-\*\d\+\>]\s*/gm, '').split(/[.!?\n]+/).filter(o => o.trim().length > 0);
     let stdLongitud = 0;
 
@@ -104,32 +108,23 @@ function auditoriaPhishguard() {
         const media = longitudesOraciones.reduce((a, b) => a + b, 0) / longitudesOraciones.length;
         const varianza = longitudesOraciones.reduce((a, b) => a + Math.pow(b - media, 2), 0) / longitudesOraciones.length;
         stdLongitud = Math.sqrt(varianza);
-    } else {
-        // Si es solo 1 oración larga (como el texto de Milo J), dividimos por cláusulas/comas
-        const clausulas = texto.split(/[,y|pero]+\s*/).filter(c => c.trim().length > 0);
-        if (clausulas.length > 1) {
-            const longClausulas = clausulas.map(c => c.trim().split(/\s+/).length);
-            const media = longClausulas.reduce((a, b) => a + b, 0) / longClausulas.length;
-            const varianza = longClausulas.reduce((a, b) => a + Math.pow(b - media, 2), 0) / longClausulas.length;
-            stdLongitud = Math.sqrt(varianza);
-        } else {
-            stdLongitud = 0;
-        }
     }
 
-    // 4. LÓGICA DE CLASIFICACIÓN
+    // 4. LÓGICA DE CLASIFICACIÓN CORREGIDA
     let probFinal = 10;
 
     if (tienePhishing || tieneUrl) {
+        // RIESGO ALTO: PHISHING
         probFinal = 90;
     } else if (tieneMarkdown || contadorHuellas > 0) {
+        // RIESGO ALTO: SINTAXIS / FORMATO DE IA
         probFinal = 75 + (contadorHuellas * 5);
         if (probFinal > 95) probFinal = 95;
-    } else if (ttr < 0.70 && stdLongitud < 2.0) {
-        // Solo si la variedad es muy baja Y no tiene variación de ritmo entra en RIESGO MEDIO
+    } else if (!tieneColoquial) {
+        // RIESGO MEDIO: TEXTO FORMAL / CORPORATIVO / INSTITUCIONAL (Sin marcadores informales)
         probFinal = 40;
     } else {
-        // Textos narrativos continuos o conversacionales caen en RIESGO BAJO
+        // RIESGO BAJO: TEXTO CASUAL / NARRATIVO HUMANO
         probFinal = 10;
     }
 
@@ -137,9 +132,9 @@ function auditoriaPhishguard() {
     probValue.innerText = probFinal + "%";
     progressFill.style.width = probFinal + "%";
 
-    document.getElementById('metricPpl').innerText = (ttr < 0.70) ? "Baja (Predecible / Estándar)" : "Alta (Impredecible / Humano)";
-    document.getElementById('metricBurstiness').innerText = (stdLongitud < 2.0) ? "Baja (Estructura Monótona)" : "Alta (Ritmo Dinámico)";
-    document.getElementById('metricEntropia').innerText = (ttr < 0.70) ? "Sintética / Homogénea" : "Orgánica / Heterogénea";
+    document.getElementById('metricPpl').innerText = (ttr < 0.75) ? "Baja (Predecible / Estándar)" : "Alta (Impredecible / Humano)";
+    document.getElementById('metricBurstiness').innerText = (stdLongitud < 3.0) ? "Baja (Estructura Monótona)" : "Alta (Ritmo Dinámico)";
+    document.getElementById('metricEntropia').innerText = (ttr < 0.75) ? "Sintética / Homogénea" : "Orgánica / Heterogénea";
     document.getElementById('metricHuellas').innerText = contadorHuellas > 0 ? `${contadorHuellas} conector(es) detectado(s)` : (tieneMarkdown ? "Formato Markdown detectado" : "Ninguna");
     document.getElementById('metricPhishing').innerText = (tienePhishing || tieneUrl) ? "Detectados (Anzuelos/Enlaces)" : "Ninguno";
 
@@ -161,6 +156,5 @@ function auditoriaPhishguard() {
     }
 }
 </script>
-
 </body>
 </html>
