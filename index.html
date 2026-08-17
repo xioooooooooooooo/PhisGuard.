@@ -30,38 +30,42 @@
             border: 1px solid #231842;
         }
 
-        /* HEADER Y LOGO DETECTIVE */
+        /* HEADER Y LOGO CENTRADO Y AGRANDADO */
         .app-header {
             display: flex;
+            justify-content: center;
             align-items: center;
             padding-bottom: 20px;
             margin-bottom: 20px;
             border-bottom: 1px solid #231842;
+            width: 100%;
         }
 
         .logo-container {
             display: flex;
             align-items: center;
-            gap: 15px;
+            justify-content: center;
+            gap: 18px;
         }
 
         .logo-img {
-            width: 55px;
-            height: 55px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
             object-fit: cover;
-            border: 2px solid #d4af37;
-            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
-            transition: transform 0.2s ease;
+            border: 3px solid #d4af37;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         .logo-img:hover {
-            transform: scale(1.05);
+            transform: scale(1.08);
+            box-shadow: 0 0 22px rgba(212, 175, 55, 0.8);
         }
 
         .brand-title {
             color: #ec4899;
-            font-size: 28px;
+            font-size: 34px;
             font-weight: 800;
             letter-spacing: 0.5px;
         }
@@ -180,7 +184,7 @@
 <body>
 
 <div class="container">
-    <!-- HEADER CON ENLACE DIRECTO DE GITHUB PAGE -->
+    <!-- HEADER CENTRADO -->
     <header class="app-header">
         <div class="logo-container">
             <img src="https://raw.githubusercontent.com/xioooooooooooooo/PhisGuard./main/logo_phishguard.jpg" alt="PhishGuard Logo" class="logo-img">
