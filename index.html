@@ -69,13 +69,13 @@ function auditoriaPhishguard() {
         return;
     }
 
-    // 1. ANÁLISIS DE PALABRAS Y VOCABULARIO
+    // 1. ANÁLISIS DE PALABRAS Y VOCABULARIO (TTR)
     const palabras = texto.toLowerCase().match(/[a-záéíóúñü0-9]+/gi) || [];
     const totalPalabras = palabras.length;
     const conjuntoPalabras = new Set(palabras);
     const ttr = totalPalabras > 0 ? (conjuntoPalabras.size / totalPalabras) : 1;
 
-    // 2. DETECCIÓN DE PATRONES ESPECÍFICOS
+    // 2. DETECCIÓN DE PATRONES DE IA Y PHISHING
     const tieneMarkdown = /^[\s]*[•\-\*\d\+\>]/m.test(texto) || texto.includes("**");
     
     const conectoresMecanicos = [
@@ -95,31 +95,41 @@ function auditoriaPhishguard() {
     const tienePhishing = patronPhishing.test(texto);
     const tieneUrl = /(https?:\/\/[^\s]+)/i.test(texto);
 
-    // 3. CÁLCULO DE BURSTINESS (ORACIONES)
+    // 3. CÁLCULO DE BURSTINESS (Fluidez de oraciones / cláusulas)
     const oraciones = texto.replace(/^[\s]*[•\-\*\d\+\>]\s*/gm, '').split(/[.!?\n]+/).filter(o => o.trim().length > 0);
-    const longitudesOraciones = oraciones.map(o => o.trim().split(/\s+/).length);
     let stdLongitud = 0;
+
     if (oraciones.length > 1) {
+        const longitudesOraciones = oraciones.map(o => o.trim().split(/\s+/).length);
         const media = longitudesOraciones.reduce((a, b) => a + b, 0) / longitudesOraciones.length;
         const varianza = longitudesOraciones.reduce((a, b) => a + Math.pow(b - media, 2), 0) / longitudesOraciones.length;
         stdLongitud = Math.sqrt(varianza);
+    } else {
+        // Si es solo 1 oración larga (como el texto de Milo J), dividimos por cláusulas/comas
+        const clausulas = texto.split(/[,y|pero]+\s*/).filter(c => c.trim().length > 0);
+        if (clausulas.length > 1) {
+            const longClausulas = clausulas.map(c => c.trim().split(/\s+/).length);
+            const media = longClausulas.reduce((a, b) => a + b, 0) / longClausulas.length;
+            const varianza = longClausulas.reduce((a, b) => a + Math.pow(b - media, 2), 0) / longClausulas.length;
+            stdLongitud = Math.sqrt(varianza);
+        } else {
+            stdLongitud = 0;
+        }
     }
 
-    // 4. ASIGNACIÓN DIRECTA DE SCORE SEGÚN CONDICIONES
+    // 4. LÓGICA DE CLASIFICACIÓN
     let probFinal = 10;
 
     if (tienePhishing || tieneUrl) {
-        // CASO 4: PHISHING -> RIESGO ALTO
         probFinal = 90;
     } else if (tieneMarkdown || contadorHuellas > 0) {
-        // CASO 3: FORMATO IA / LLM -> RIESGO ALTO
         probFinal = 75 + (contadorHuellas * 5);
         if (probFinal > 95) probFinal = 95;
-    } else if (ttr < 0.85 || stdLongitud < 4.0) {
-        // CASO 2: TEXTO FORMAL / CORPORATIVO (Sin Markdown ni conectores) -> RIESGO MEDIO
+    } else if (ttr < 0.70 && stdLongitud < 2.0) {
+        // Solo si la variedad es muy baja Y no tiene variación de ritmo entra en RIESGO MEDIO
         probFinal = 40;
     } else {
-        // CASO 1: TEXTO CASUAL / INFORMAL -> RIESGO BAJO
+        // Textos narrativos continuos o conversacionales caen en RIESGO BAJO
         probFinal = 10;
     }
 
@@ -128,8 +138,8 @@ function auditoriaPhishguard() {
     progressFill.style.width = probFinal + "%";
 
     document.getElementById('metricPpl').innerText = (ttr < 0.70) ? "Baja (Predecible / Estándar)" : "Alta (Impredecible / Humano)";
-    document.getElementById('metricBurstiness').innerText = (stdLongitud < 3.5) ? "Baja (Estructura Monótona)" : "Alta (Ritmo Dinámico)";
-    document.getElementById('metricEntropia').innerText = (ttr < 0.75) ? "Sintética / Homogénea" : "Orgánica / Heterogénea";
+    document.getElementById('metricBurstiness').innerText = (stdLongitud < 2.0) ? "Baja (Estructura Monótona)" : "Alta (Ritmo Dinámico)";
+    document.getElementById('metricEntropia').innerText = (ttr < 0.70) ? "Sintética / Homogénea" : "Orgánica / Heterogénea";
     document.getElementById('metricHuellas').innerText = contadorHuellas > 0 ? `${contadorHuellas} conector(es) detectado(s)` : (tieneMarkdown ? "Formato Markdown detectado" : "Ninguna");
     document.getElementById('metricPhishing').innerText = (tienePhishing || tieneUrl) ? "Detectados (Anzuelos/Enlaces)" : "Ninguno";
 
