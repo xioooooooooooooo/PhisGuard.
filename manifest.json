@@ -1,18 +1,22 @@
 {
   "name": "PhishGuard",
   "short_name": "PhishGuard",
-  "description": "Herramienta de detección de Phishing y análisis estilométrico.",
-  "start_url": "index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0b0718",
   "theme_color": "#0b0718",
-  "orientation": "portrait",
   "icons": [
     {
       "src": "https://raw.githubusercontent.com/xioooooooooooooo/PhisGuard./main/logo_phishguard.jpg",
       "sizes": "512x512",
       "type": "image/jpeg",
-      "purpose": "any"
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/xioooooooooooooo/PhisGuard./main/logo_phishguard.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
     }
   ]
 }
