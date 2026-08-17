@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PhishGuard - Motor Avanzado de Auditoría de IA</title>
+    <title>PhishGuard - Detector de IA y Phishing</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
@@ -53,11 +53,6 @@
             margin-bottom: 6px;
         }
 
-        .header-panel p {
-            color: #fbcfe8;
-            font-size: 0.95rem;
-        }
-
         .card {
             background: rgba(26, 9, 43, 0.7);
             border: 1px solid #831843;
@@ -86,7 +81,6 @@
             font-family: inherit;
             resize: none;
             outline: none;
-            transition: all 0.3s ease;
         }
 
         textarea:focus {
@@ -104,12 +98,6 @@
             padding: 14px;
             cursor: pointer;
             box-shadow: 0 4px 18px rgba(219, 39, 119, 0.45);
-            transition: all 0.2s ease;
-        }
-
-        button.primary-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 24px rgba(219, 39, 119, 0.65);
         }
 
         .verdict-box {
@@ -119,10 +107,6 @@
             line-height: 1.4;
             background: #140524;
             border-left: 4px solid #831843;
-        }
-
-        .progress-bar-container {
-            margin-top: 5px;
         }
 
         .progress-label {
@@ -164,16 +148,6 @@
             color: #f472b6;
             font-weight: bold;
         }
-
-        .warning-tag {
-            font-size: 0.8rem;
-            color: #fbbf24;
-            background: rgba(251, 191, 36, 0.1);
-            border: 1px solid rgba(251, 191, 36, 0.3);
-            padding: 8px 12px;
-            border-radius: 8px;
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -181,24 +155,20 @@
 <div class="container">
     <div class="header-panel">
         <h1>🛡️ PhishGuard</h1>
-        <p>Análisis Multicapa de Sintaxis, Perplejidad y Coherencia de IA</p>
+        <p>Sistema interactivo de clasificación de riesgo de sintaxis de IA</p>
     </div>
 
     <div class="card">
         <label for="inputText">Texto a analizar</label>
-        <textarea id="inputText" placeholder="Pega el texto aquí para evaluar su índice de IA..."></textarea>
-        <button class="primary-btn" id="analyzeBtn">Auditar con PhishGuard</button>
+        <textarea id="inputText" placeholder="Pega el texto aquí para evaluar su nivel de riesgo..."></textarea>
+        <button class="primary-btn" id="analyzeBtn">Analizar con PhishGuard</button>
     </div>
 
     <div class="card">
-        <label>Dictamen Técnico e Indicadores</label>
+        <label>Dictamen e Indicadores</label>
         
         <div id="verdictBox" class="verdict-box">
-            Ingresa un texto para iniciar la evaluación sintáctica y estilométrica.
-        </div>
-
-        <div id="shortTextWarning" class="warning-tag">
-            ⚠️ <strong>Muestra corta / Lenguaje Técnico:</strong> Muestras de baja extensión o con perfil académico pueden elevar la rigidez sintáctica y requerir verificación manual.
+            Ingresa un texto para evaluar el nivel de riesgo.
         </div>
 
         <div class="progress-bar-container">
@@ -213,10 +183,10 @@
 
         <ul class="metrics-list">
             <li>Dictamen: <span id="metricDictamen">-</span></li>
-            <li>1. Perplejidad (Predecibilidad): <span id="metricPpl">-</span></li>
-            <li>2. Burstiness (Ráfaga Sintáctica): <span id="metricBurstiness">-</span></li>
-            <li>3. Coherencia & Superficialidad: <span id="metricEmbeddings">-</span></li>
-            <li>4. Muletillas y Patrones de IA: <span id="metricMuletillas">-</span></li>
+            <li>Perplejidad (Predecibilidad): <span id="metricPpl">-</span></li>
+            <li>Variabilidad Sintáctica (Ráfaga): <span id="metricBurstiness">-</span></li>
+            <li>Estructura / Formato: <span id="metricEmbeddings">-</span></li>
+            <li>Muletillas de IA / Phishing: <span id="metricMuletillas">-</span></li>
         </ul>
     </div>
 </div>
@@ -239,107 +209,80 @@ function auditoriaPhishguard() {
     const metricBurstiness = document.getElementById('metricBurstiness');
     const metricEmbeddings = document.getElementById('metricEmbeddings');
     const metricMuletillas = document.getElementById('metricMuletillas');
-    const shortTextWarning = document.getElementById('shortTextWarning');
 
     if (!textoInput) return;
     const texto = textoInput.value.trim();
 
     if (texto.length < 20) {
-        verdictBox.innerHTML = "⚠️ <strong>Texto muy corto:</strong> Ingresa al menos 20 caracteres para realizar el análisis.";
-        shortTextWarning.style.display = "none";
+        verdictBox.innerHTML = "⚠️ <strong>Texto muy corto:</strong> Ingresa al menos 20 caracteres para analizar.";
         return;
     }
 
-    // -------------------------------------------------------------
-    // PARAMETRIZACIÓN TÉCNICA
-    // -------------------------------------------------------------
-    
-    // Palabras y oraciones
+    // Análisis de estructura
     const palabras = texto.split(/\s+/).filter(p => p.length > 0);
     const conteoPalabras = palabras.length;
     const oraciones = texto.split(/[.!?\n]+/).filter(o => o.trim().length > 0);
     const longitudes = oraciones.map(o => o.trim().split(/\s+/).length);
 
-    // Métrica 1: Perplejidad (Mide impredecibilidad y vocabulario)
+    // Métrica 1: Perplejidad
     const conteoComas = (texto.match(/,/g) || []).length;
     const ratioComas = ((conteoComas / Math.max(conteoPalabras, 1)) * 100);
-    
-    // Métrica 2: Burstiness / Variabilidad de Ráfaga (Desviación Estándar)
+
+    // Métrica 2: Variabilidad / Ráfaga (Burstiness)
     const media = longitudes.reduce((a, b) => a + b, 0) / Math.max(longitudes.length, 1);
     const varianza = longitudes.reduce((a, b) => a + Math.pow(b - media, 2), 0) / Math.max(longitudes.length, 1);
-    const stdLongitud = Math.sqrt(varianza); // Ráfaga sintáctica
-    
-    // Cálculo aproximado de Perplejidad (Baja perplejidad = Alta IA)
-    const pplValor = Math.max(10, Math.min(100, Math.round(100 - (stdLongitud * 5 + ratioComas * 2))));
+    const stdLongitud = Math.sqrt(varianza);
 
-    // Métrica 3: Coherencia Semántica / Embeddings y Superficialidad
-    // Evalúa conectores lógicos, viñetas simétricas y formato Markdown rígido
-    const tieneEstructuraIa = /(\*\*.*?\*\*)|(^\s*[\*\-•]\s*[\u{1F300}-\u{1F9FF}🇵🇪🎉🥁🍲🚨💰⏰⚠️👉])/mu.test(texto);
-    const tienePhishingUrgencia = /(felicidades|ganado|premio|reclamar|última oportunidad|cancelado|confirmar tu identidad|accede al enlace|inmediatamente)/i.test(texto);
+    // Detección de patrones
+    const tieneViñetas = /^[\s]*[•\-\*\d\+\>]/m.test(texto);
+    const tieneNegritas = texto.includes("**");
+    const tieneUrgencia = /(felicidades|ganado|premio|reclamar|última oportunidad|cancelado|confirmar tu identidad|accede al enlace|inmediatamente)/i.test(texto);
     const tieneUrl = /(https?:\/\/[^\s]+)/i.test(texto);
-
-    // Métrica 4: Muletillas y Patrones Léxicos Recurrentes de LLMs
-    const conectoresIa = /(en conclusión|por lo tanto|es fundamental destacar|en resumen|cabe resaltar|por consiguiente|es importante tener en cuenta|en este sentido)/gi;
+    
+    // Conectores frecuentes de IA
+    const conectoresIa = /(en conclusión|por lo tanto|es fundamental destacar|en resumen|cabe resaltar|por consiguiente|es importante tener en cuenta)/gi;
     const coincidenciasMuletillas = (texto.match(conectoresIa) || []).length;
 
-    // -------------------------------------------------------------
-    // PONDERACIÓN MULTICAPA Y SCORE
-    // -------------------------------------------------------------
-    let scoreIa = 40.0;
+    // Cálculo del puntaje
+    let score = 25.0; // Base inicial neutra
 
-    // Ajuste por Burstiness y Perplejidad
-    if (stdLongitud < 4.5 && oraciones.length > 1) scoreIa += 20; // Ritmo monótono
-    if (pplValor > 65) scoreIa += 15;                             // Vocabulario predecible
-    
-    // Ajuste por Muletillas y Formato
-    if (coincidenciasMuletillas > 0) scoreIa += (coincidenciasMuletillas * 12);
-    if (tieneEstructuraIa) scoreIa += 20;
-    if (texto.includes("**")) scoreIa += 10;
+    if (stdLongitud < 3.5 && oraciones.length > 1) score += 25; // Ritmo muy rígido
+    if (ratioComas > 7.0) score += 15;
+    if (tieneViñetas) score += 20;
+    if (tieneNegritas) score += 15;
+    if (coincidenciasMuletillas > 0) score += (coincidenciasMuletillas * 15);
+    if (tieneUrgencia) score += 25;
+    if (tieneUrl) score += 20;
 
-    // Ajuste por Phishing / Urgencia Sintética
-    if (tienePhishingUrgencia) scoreIa += 20;
-    if (tieneUrl) scoreIa += 15;
+    const probIa = Math.min(99, Math.max(1, Math.round(score)));
 
-    // Factor 5: Calibración por muestras cortas o técnicas (Falsos Positivos)
-    const esMuestraCorta = conteoPalabras < 40;
-    if (esMuestraCorta) {
-        shortTextWarning.style.display = "block";
-    } else {
-        shortTextWarning.style.display = "none";
-    }
-
-    const probIa = Math.min(99, Math.max(1, Math.round(scoreIa)));
-
-    // -------------------------------------------------------------
-    // ACTUALIZACIÓN DE LA INTERFAZ DENTRO DEL DOM
-    // -------------------------------------------------------------
+    // Actualización de pantalla
     probValue.innerText = probIa + "%";
     progressFill.style.width = probIa + "%";
 
-    // Actualización de Métricas de la Lista
-    metricPpl.innerText = pplValor > 60 ? "Baja (Vocabulario Predecible)" : "Alta (Variada / Orgánica)";
-    metricBurstiness.innerText = stdLongitud < 4.5 ? "Baja (Estructura Monótona)" : "Alta (Flujo Dinámico)";
-    metricEmbeddings.innerText = (tieneEstructuraIa || tienePhishingUrgencia) ? "Sintética / Rígida" : "Fluida / Profunda";
-    metricMuletillas.innerText = coincidenciasMuletillas > 0 ? `Detectadas (${coincidenciasMuletillas})` : "No detectadas";
+    metricPpl.innerText = ratioComas > 6.0 ? "Baja (Predecible)" : "Alta (Variada)";
+    metricBurstiness.innerText = stdLongitud < 3.5 ? "Baja (Monótona)" : "Alta (Dinámica)";
+    metricEmbeddings.innerText = (tieneViñetas || tieneNegritas) ? "Sintética (Markdown/Viñetas)" : "Orgánica";
+    metricMuletillas.innerText = (coincidenciasMuletillas > 0 || tieneUrgencia) ? "Detectadas" : "Ninguna";
 
-    // Dictamen Final
-    if (probIa >= 70) {
-        const nivelRiesgo = "🔴 RIESGO ALTO DE IA";
+    // Clasificación de Riesgo
+    if (probIa >= 65) {
+        const nivelRiesgo = "🔴 RIESGO ALTO";
         verdictBox.style.borderLeftColor = "#ef4444";
         progressFill.style.background = "#ef4444";
-        verdictBox.innerHTML = "🔴 <strong>Riesgo Alto (" + probIa + "%):</strong> Patrones de baja perplejidad, estructuras simétricas o firmas léxicas automatizadas de LLM.";
+        verdictBox.innerHTML = "🔴 <strong>RIESGO ALTO (" + probIa + "%):</strong> El texto presenta patrones automatizados rígidos, estructuras sintéticas o anzuelos de urgencia/phishing.";
         metricDictamen.innerText = nivelRiesgo;
     } else if (probIa >= 35) {
-        const nivelRiesgo = "🟡 RIESGO MEDIO DE IA";
+        const nivelRiesgo = "🟡 RIESGO MEDIO";
         verdictBox.style.borderLeftColor = "#eab308";
         progressFill.style.background = "#eab308";
-        verdictBox.innerHTML = "🟡 <strong>Riesgo Medio (" + probIa + "%):</strong> Coincidencias parciales en estructura sintáctica o conectores. Puede contener pasajes editados o redactados bajo estilo formal.";
+        verdictBox.innerHTML = "🟡 <strong>RIESGO MEDIO (" + probIa + "%):</strong> Combinación de pasajes informales con elementos estructurados o conectores formales.";
         metricDictamen.innerText = nivelRiesgo;
     } else {
-        const nivelRiesgo = "🟢 RIESGO BAJO (HUMANO)";
+        const nivelRiesgo = "🟢 RIESGO BAJO";
         verdictBox.style.borderLeftColor = "#22c55e";
         progressFill.style.background = "#22c55e";
-        verdictBox.innerHTML = "🟢 <strong>Riesgo Bajo (" + probIa + "%):</strong> Alta ráfaga sintáctica y perplejidad en la elección del vocabulario, características propias de la redacción humana.";
+        verdictBox.innerHTML = "🟢 <strong>RIESGO BAJO (" + probIa + "%):</strong> Redacción orgánica, fluida y con variabilidad natural propia de un autor humano.";
         metricDictamen.innerText = nivelRiesgo;
     }
 }
