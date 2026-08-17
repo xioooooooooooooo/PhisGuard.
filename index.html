@@ -31,7 +31,7 @@
             border: 1px solid #231842;
         }
 
-        /* HEADER & LOGO DB */
+        /* HEADER & LOGO NUEVO */
         .app-header {
             display: flex;
             align-items: center;
@@ -43,15 +43,20 @@
         .logo-container {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 15px;
         }
 
-        .custom-logo {
-            filter: drop-shadow(0px 2px 6px rgba(59, 130, 246, 0.4));
+        .logo-img {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #d4af37; /* Borde dorado haciendo juego con la insignia */
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
             transition: transform 0.2s ease;
         }
 
-        .custom-logo:hover {
+        .logo-img:hover {
             transform: scale(1.05);
         }
 
@@ -176,26 +181,11 @@
 <body>
 
 <div class="container">
-    <!-- HEADER CON LOGO DB -->
+    <!-- HEADER CON NUEVO LOGO DETECTIVE -->
     <header class="app-header">
         <div class="logo-container">
-            <svg class="custom-logo" viewBox="0 0 100 100" width="40" height="40" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#3b82f6" />
-                        <stop offset="100%" stop-color="#1d4ed8" />
-                    </linearGradient>
-                </defs>
-                <path d="M 50 10 Q 80 10 85 35 Q 85 70 50 90 Q 15 70 15 35 Q 20 10 50 10 Z" 
-                      fill="url(#shieldGrad)" stroke="#60a5fa" stroke-width="3" />
-                <text x="50" y="62" 
-                      font-family="Arial, sans-serif" 
-                      font-size="34" 
-                      font-weight="bold" 
-                      fill="#ffffff" 
-                      text-anchor="middle" 
-                      letter-spacing="-2">db</text>
-            </svg>
+            <!-- Reemplaza 'logo_phishguard.jpg' por el nombre o ruta exacta de tu imagen -->
+            <img src="logo_phishguard.jpg" alt="PhishGuard Logo" class="logo-img">
             <span class="brand-title">PhishGuard</span>
         </div>
     </header>
