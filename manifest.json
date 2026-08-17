@@ -7,18 +7,16 @@
   "theme_color": "#0b0718",
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/xioooooooooooooo/PhisGuard./main/logo_phishguard.jpg",
+      "src": "https://raw.githubusercontent.com/xioooooooooooooo/PhisGuard./main/logo_phishguard.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://raw.githubusercontent.com/xioooooooooooooo/PhisGuard./main/logo_phishguard.jpg",
+      "src": "https://raw.githubusercontent.com/xioooooooooooooo/PhisGuard./main/logo_phishguard.png",
       "sizes": "192x192",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any maskable"
     }
-  ],
-  "id": "/?source=pwa",
-  "description": "Herramienta de detección de Phishing y análisis estilométrico."
+  ]
 }
