@@ -69,13 +69,13 @@ function auditoriaPhishguard() {
         return;
     }
 
-    // 1. ANÁLISIS DE PALABRAS Y VOCABULARIO (TTR)
+    // 1. ANÁLISIS LÉXICO
     const palabras = texto.toLowerCase().match(/[a-záéíóúñü0-9]+/gi) || [];
     const totalPalabras = palabras.length;
     const conjuntoPalabras = new Set(palabras);
     const ttr = totalPalabras > 0 ? (conjuntoPalabras.size / totalPalabras) : 1;
 
-    // 2. DETECCIÓN DE PATRONES ESPECÍFICOS
+    // 2. DETECCIÓN DE PATRONES DE IA Y PHISHING (RIESGO ALTO)
     const tieneMarkdown = /^[\s]*[•\-\*\d\+\>]/m.test(texto) || texto.includes("**");
     
     const conectoresMecanicos = [
@@ -91,15 +91,16 @@ function auditoriaPhishguard() {
         if (coincidencias) contadorHuellas += coincidencias.length;
     });
 
-    // Detectores coloquiales / informales (Indicador exclusivo de origen humano casual)
-    const patronColoquial = /(oye|disculpa|ajá|jajaja|o sea|bueno|avísame|pucha|mira|bro|chao|saludos|milo j|canto|canciones|publico|tráfico|avenida)/i;
-    const tieneColoquial = patronColoquial.test(texto);
-
     const patronPhishing = /(felicidades|ganado|premio|reclamar|última oportunidad|cuenta suspendida|confirmar tu identidad|inmediatamente|accede al enlace|verificación requerida)/i;
     const tienePhishing = patronPhishing.test(texto);
     const tieneUrl = /(https?:\/\/[^\s]+)/i.test(texto);
 
-    // 3. CÁLCULO DE BURSTINESS
+    // 3. DETECCIÓN DE ELEMENTOS COLOQUIALES / NARRATIVOS (RIESGO BAJO)
+    // Se usan bordes de palabra (\b) para evitar coincidencias falsas como "bro" en "miembros"
+    const patronColoquial = /\b(oye|disculpa|ajá|jajaja|o sea|bueno|avísame|pucha|mira|bro|chao|saludos|milo j|canto|canciones|publico|tráfico|avenida|hola|genial|gracias)\b/i;
+    const tieneColoquial = patronColoquial.test(texto);
+
+    // 4. CÁLCULO DE BURSTINESS
     const oraciones = texto.replace(/^[\s]*[•\-\*\d\+\>]\s*/gm, '').split(/[.!?\n]+/).filter(o => o.trim().length > 0);
     let stdLongitud = 0;
 
@@ -110,25 +111,23 @@ function auditoriaPhishguard() {
         stdLongitud = Math.sqrt(varianza);
     }
 
-    // 4. LÓGICA DE CLASIFICACIÓN CORREGIDA
+    // 5. EVALUACIÓN Y ASIGNACIÓN DE PUNTAJE
     let probFinal = 10;
 
     if (tienePhishing || tieneUrl) {
-        // RIESGO ALTO: PHISHING
         probFinal = 90;
     } else if (tieneMarkdown || contadorHuellas > 0) {
-        // RIESGO ALTO: SINTAXIS / FORMATO DE IA
         probFinal = 75 + (contadorHuellas * 5);
         if (probFinal > 95) probFinal = 95;
     } else if (!tieneColoquial) {
-        // RIESGO MEDIO: TEXTO FORMAL / CORPORATIVO / INSTITUCIONAL (Sin marcadores informales)
+        // Texto formal / corporativo / institucional puro -> RIESGO MEDIO
         probFinal = 40;
     } else {
-        // RIESGO BAJO: TEXTO CASUAL / NARRATIVO HUMANO
+        // Texto informal / conversacional -> RIESGO BAJO
         probFinal = 10;
     }
 
-    // 5. ACTUALIZACIÓN DE INTERFAZ
+    // 6. ACTUALIZACIÓN DE INTERFAZ
     probValue.innerText = probFinal + "%";
     progressFill.style.width = probFinal + "%";
 
