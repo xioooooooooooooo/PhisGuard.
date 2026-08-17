@@ -70,13 +70,13 @@ function auditoriaPhishguard() {
         return;
     }
 
-    // --- 1. PROCESAMIENTO DE ORACIONES Y PALABRAS ---
+    // 1. PROCESAMIENTO DE ORACIONES Y PALABRAS
     const palabras = texto.toLowerCase().match(/[a-záéíóúñü0-9]+/gi) || [];
     const totalPalabras = palabras.length;
     const oraciones = texto.split(/[.!?\n]+/).filter(o => o.trim().length > 0);
     const longitudesOraciones = oraciones.map(o => o.trim().split(/\s+/).length);
 
-    // --- 2. CÁLCULO DE BURSTINESS (RÁFAGA / VARIACIÓN DE ORACIONES) ---
+    // 2. CÁLCULO DE BURSTINESS (VARIACIÓN DE ORACIONES)
     let stdLongitud = 0;
     let ratioMaxMin = 1;
     if (oraciones.length > 1) {
@@ -87,14 +87,14 @@ function auditoriaPhishguard() {
         const maxLen = Math.max(...longitudesOraciones);
         ratioMaxMin = maxLen / Math.max(1, minLen);
     } else {
-        stdLongitud = 6.0; // Valor neutro/humano para oraciones únicas
+        stdLongitud = 6.0;
     }
 
-    // --- 3. CÁLCULO DE PERPLEJIDAD & ENTROPÍA LINGÜÍSTICA (Vocabulario Unico) ---
+    // 3. CÁLCULO DE PERPLEJIDAD & ENTROPÍA (TTR - Type Token Ratio)
     const conjuntoPalabras = new Set(palabras);
-    const ttr (Type-Token Ratio) = totalPalabras > 0 ? (conjuntoPalabras.size / totalPalabras) : 1;
+    const ttr = totalPalabras > 0 ? (conjuntoPalabras.size / totalPalabras) : 1;
 
-    // --- 4. DETECCIÓN DE HUELLAS DIGITALES Y CONECTORES MECÁNICOS DE LLM ---
+    // 4. DETECCIÓN DE HUELLAS DIGITALES LLM
     const conectoresMecanicos = [
         "en resumen", "por lo tanto", "es fundamental destacar", "cabe resaltar",
         "en conclusión", "por consiguiente", "en el dinámico mundo de", "es importante mencionar",
@@ -109,53 +109,45 @@ function auditoriaPhishguard() {
 
     const tieneMarkdownEstructurado = /^[\s]*[•\-\*\d\+\>]/m.test(texto) || texto.includes("**");
 
-    // --- 5. DETECCIÓN DE PATRONES DE PHISHING / URGENCIA ---
+    // 5. DETECCIÓN DE PHISHING Y URGENCIA
     const patronPhishing = /(felicidades|ganado|premio|reclamar|última oportunidad|cuenta suspendida|confirmar tu identidad|inmediatamente|accede al enlace|verificación requerida)/i;
     const tienePhishing = patronPhishing.test(texto);
     const tieneUrl = /(https?:\/\/[^\s]+)/i.test(texto);
 
-    // --- 6. PUNTUACIÓN PONDERADA SEGÚN CRITERIOS LINGÜÍSTICOS ---
+    // 6. PUNTUACIÓN PONDERADA
     let scoreIA = 0;
 
-    // Evaluamos Burstiness (Baja ráfaga = Más probabilidad de IA)
     if (oraciones.length > 1) {
         if (stdLongitud < 2.0 && ratioMaxMin < 2.0) {
-            scoreIA += 30; // Muy monótono y uniforme (Típico LLM)
+            scoreIA += 30;
         } else if (stdLongitud < 3.5) {
             scoreIA += 15;
         }
     }
 
-    // Evaluamos Perplejidad / TTR (Baja perplejidad / Alta uniformidad = Mayor IA)
     if (ttr < 0.45 && totalPalabras > 30) {
-        scoreIA += 20; // Rango estadístico altamente predecible
+        scoreIA += 20;
     } else if (ttr < 0.60 && totalPalabras > 20) {
         scoreIA += 10;
     }
 
-    // Evaluamos Huellas Digitales
     if (contadorHuellas > 0) scoreIA += (contadorHuellas * 15);
     if (tieneMarkdownEstructurado) scoreIA += 15;
-
-    // Evaluamos Phishing / Alertas
     if (tienePhishing) scoreIA += 25;
     if (tieneUrl) scoreIA += 20;
 
-    // Normalización del puntaje final (Piso de 1% para textos casuales y techo de 99%)
     const probFinal = Math.min(99, Math.max(1, Math.round(scoreIA)));
 
-    // --- 7. ACTUALIZACIÓN DE LA INTERFAZ ---
+    // 7. ACTUALIZACIÓN DE INTERFAZ
     probValue.innerText = probFinal + "%";
     progressFill.style.width = probFinal + "%";
 
-    // Textos informativos de métricas
     document.getElementById('metricPpl').innerText = (ttr < 0.50 && totalPalabras > 25) ? "Baja (Predecible / LLM)" : "Alta (Impredecible / Humano)";
     document.getElementById('metricBurstiness').innerText = (stdLongitud < 2.5 && oraciones.length > 1) ? "Baja (Estructura Monótona)" : "Alta (Ritmo Dinámico)";
     document.getElementById('metricEntropia').innerText = (ttr < 0.55) ? "Sintética / Homogénea" : "Orgánica / Heterogénea";
     document.getElementById('metricHuellas').innerText = contadorHuellas > 0 ? `${contadorHuellas} conectores detectados` : (tieneMarkdownEstructurado ? "Formato Markdown detectado" : "Ninguna");
     document.getElementById('metricPhishing').innerText = (tienePhishing || tieneUrl) ? "Detectados (Anzuelos/Enlaces)" : "Ninguno";
 
-    // Clasificación visual
     if (probFinal >= 60) {
         verdictBox.style.borderLeftColor = "#ef4444";
         progressFill.style.background = "#ef4444";
